@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-eOJMYsd53ii+scO/bJGFsiCZc+5NDVN2yr8+0RDqr0Ql0h+rP48ckxlpbzKgwra6" crossorigin="anonymous">
+    <title>ICARUS Status</title>
+    <style>
+        .responded {
+    color:green;
+    }
+    .checking,.unchecked {
+        color:#FF8C00;
+    }
+    .timeout {
+        color:red;
+    }
+    </style>
+  </head>
+  <body class="bg-light bg-gradient">
+    <div class="container d-flex-column w-50 justify-content-center">
+        <h1 class="">ICARUS Status</h1>
+        <ul class="list-group" data-bind="foreach:servers">
+            <li class="list-group-item">
+                <div class="d-flex">
+                    <a class="p-2 flex-grow-1 bd-highlight" href="#" data-bind="text:name,attr:{href: 'http://'+name}">tester</a> <span data-bind="text:status,css:status"></span>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.0/knockout-min.js" />
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js" integrity="sha384-JEW9xMcG8R+pH31jmWH6WWP0WintQrMb4s7ZOdauHnUtxwoG2vI5DkLtS3qm9Ekf" crossorigin="anonymous"></script>
+
+    <script>
+
+function ping(ip, callback) {
+
+if (!this.inUse) {
+    this.status = 'unchecked';
+    this.inUse = true;
+    this.callback = callback;
+    this.ip = ip;
+    var _that = this;
+    this.img = new Image();
+    this.img.onload = function () {
+        _that.inUse = false;
+        _that.callback('responded');
+
+    };
+    this.img.onerror = function (e) {
+        if (_that.inUse) {
+            _that.inUse = false;
+            _that.callback('responded', e);
+        }
+
+    };
+    this.start = new Date().getTime();
+    this.img.src = "" + ip;
+    this.timer = setTimeout(function () {
+        if (_that.inUse) {
+            _that.inUse = false;
+            _that.callback('timeout');
+        }
+    }, 1500);
+}
+}
+var PingModel = function (servers) {
+var self = this;
+var myServers = [];
+ko.utils.arrayForEach(servers, function (location) {
+    myServers.push({
+        name: location,
+        status: ko.observable('unchecked')
+    });
+});
+self.servers = ko.observableArray(myServers);
+ko.utils.arrayForEach(self.servers(), function (s) {
+    s.status('checking');
+    new ping(s.name, function (status, e) {
+        s.status(status);
+    });
+});
+};
+var komodel = new PingModel([
+'https://vpn.icarus-consult.de',
+'https://icarus-consult.de',
+'http://meet.icarus-consult.de/'
+]);
+ko.applyBindings(komodel);
+    </script>
+  </body>
+</html>
